@@ -5,6 +5,7 @@ node_modules/
 .DS_Store
 debug*
 datasets/
+data/model_test_nifti
 checkpoints/
 results/
 build/

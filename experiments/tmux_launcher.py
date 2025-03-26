@@ -5,6 +5,7 @@ import os
 import math
 import GPUtil
 import re
+import time
 
 available_gpu_devices = None
 
@@ -12,7 +13,7 @@ available_gpu_devices = None
 class Options():
     def __init__(self, *args, **kwargs):
         self.args = []
-        self.kvs = {"gpu_ids": "0"}
+        self.kvs = {}
         self.set(*args, **kwargs)
 
     def set(self, *args, **kwargs):
@@ -82,7 +83,6 @@ class TmuxLauncher():
             window_name = "experiments_{}".format(w)
             os.system("tmux new-window -n {}".format(window_name))
         self.tmux_prepared = True
-
     def refine_command(self, command, which_epoch, continue_train, gpu_id=None):
         command = str(command)
         if "--gpu_ids" in command:
@@ -93,12 +93,16 @@ class TmuxLauncher():
         gpu_ids = gpu_ids.split(",")
         num_gpus = len(gpu_ids)
         global available_gpu_devices
-        if available_gpu_devices is None and gpu_id is None:
-            available_gpu_devices = [str(g) for g in GPUtil.getAvailable(limit=8, maxMemory=0.5)]
-        if gpu_id is not None:
+        if gpu_id is None:
+            # Wait until at least num_gpus are available
+            while True:
+                available_gpu_devices = [str(g) for g in GPUtil.getAvailable(limit=8, maxMemory=0.5)]
+                if len(available_gpu_devices) >= num_gpus:
+                    break
+                print("{} GPU(s) required for the command {} not available. Waiting...".format(num_gpus, command))
+                time.sleep(60)  # Wait 60 seconds before checking again
+        else:
             available_gpu_devices = [i for i in str(gpu_id)]
-        if len(available_gpu_devices) < num_gpus:
-            raise ValueError("{} GPU(s) required for the command {} is not available".format(num_gpus, command))
         active_devices = ",".join(available_gpu_devices[:num_gpus])
         if which_epoch is not None:
             which_epoch = " --epoch %s " % which_epoch
@@ -108,7 +112,6 @@ class TmuxLauncher():
         if continue_train:
             command += " --continue_train "
 
-        # available_gpu_devices = [str(g) for g in GPUtil.getAvailable(limit=8, maxMemory=0.8)]
         available_gpu_devices = available_gpu_devices[num_gpus:]
 
         return command
