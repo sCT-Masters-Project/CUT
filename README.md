@@ -2,6 +2,15 @@
 
 # Contrastive Unpaired Translation (CUT)
 
+## CMD for sCT
+
+<pre>
+python -m experiments sCT train 0
+</pre>
+
+The above runs with nice priority 19, further it requires you have nifti data at the location with two folders trainA and trainB.
+'''data/model_test_nifti/train/'''
+
 ### [video (1m)](https://youtu.be/Llg0vE_MVgk) |  [video (10m)](https://youtu.be/jSGOzjmN8q0) | [website](http://taesung.me/ContrastiveUnpairedTranslation/) |   [paper](https://arxiv.org/pdf/2007.15651)
 <br>
 
